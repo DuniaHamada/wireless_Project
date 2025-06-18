@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OFDM System Calculator</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --pink: #FF85A2;
+      --pink-light: #FFB6C1;
+      --pink-dark: #E75480;
+      --purple: #B399D4;
+      --white: #FFFFFF;
+      --light-gray: #F8F9FA;
+      --gray: #E9ECEF;
+      --dark-gray: #6C757D;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --transition: all 0.3s ease;
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: var(--light-gray);
+      color: #333;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      width: 100%;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--pink-dark);
+      letter-spacing: -0.5px;
+    }
+
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--pink-dark);
+    }
+
+    .subtitle {
+      color: var(--dark-gray);
+      font-size: 1rem;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    .card {
+      background-color: var(--white);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--pink);
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(255, 133, 162, 0.15);
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: var(--dark-gray);
+    }
+
+    .input-field {
+      display: flex;
+      background-color: var(--gray);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #ddd;
+    }
+
+    input, select {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: var(--white);
+      border: none;
+      color: #333;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    select {
+      border-left: 1px solid #ddd;
+      max-width: 100px;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E75480'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 1rem;
+    }
+
+    .btn {
+      background-color: var(--pink);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      width: 100%;
+      font-size: 1rem;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn:hover {
+      background-color: var(--pink-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(231, 84, 128, 0.3);
+    }
+
+    .btn i {
+      transition: transform 0.2s ease;
+    }
+
+    .btn:hover i {
+      transform: translateX(3px);
+    }
+
+    .results-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .result-box {
+      background-color: var(--gray);
+      border-radius: 8px;
+      padding: 1.25rem;
+      border-left: 3px solid var(--pink);
+    }
+
+    .result-label {
+      font-size: 0.9rem;
+      color: var(--dark-gray);
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--pink-dark);
+    }
+
+    .placeholder {
+      color: var(--dark-gray);
+      font-style: italic;
+      padding: 1rem;
+      text-align: center;
+      grid-column: span 2;
+    }
+
+    .error-message {
+      color: var(--pink-dark);
+      font-weight: 500;
+      margin-top: 1rem;
+      text-align: center;
+      background-color: rgba(231, 84, 128, 0.1);
+      padding: 0.75rem;
+      border-radius: 8px;
+      border-left: 3px solid var(--pink-dark);
+    }
+
+    footer {
+      text-align: center;
+      padding: 1.5rem;
+      margin-top: auto;
+      color: var(--dark-gray);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--gray);
+      font-weight: 400;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1.5rem 1rem;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      h2 {
+        font-size: 1.5rem;
+      }
+      
+      .card {
+        padding: 1.5rem;
+      }
+      
+      .results-container {
+        grid-template-columns: 1fr;
+      }
+      
+      .placeholder {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>OFDM System Calculator</h1>
+      <p class="subtitle">Data rates and spectral efficiency calculations</p>
+    </header>
+
+    <main>
+      <div class="card">
+        <h2>Input Parameters</h2>
+        <div class="input-group">
+          <label>Bandwidth</label>
+          <div class="input-field">
+            <input id="bandwidth" placeholder="e.g., 180" type="number">
+            <select id="bandwidthUnit">
+              <option value="Hz">Hz</option>
+              <option value="kHz" selected>kHz</option>
+              <option value="MHz">MHz</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Subcarrier Spacing</label>
+          <div class="input-field">
+            <input id="spacing" placeholder="e.g., 15" type="number">
+            <select id="spacingUnit">
+              <option value="Hz">Hz</option>
+              <option value="kHz" selected>kHz</option>
+              <option value="MHz">MHz</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>OFDM Symbols per RB</label>
+          <div class="input-field">
+            <input id="symbols" type="number" placeholder="e.g., 7">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>RB Duration</label>
+          <div class="input-field">
+            <input id="duration" type="number" step="0.01" placeholder="e.g., 0.5">
+            <select id="durationUnit">
+              <option value="sec">sec</option>
+              <option value="msec" selected>msec</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>QAM Modulation (e.g., 64, 256)</label>
+          <div class="input-field">
+            <input id="qam" type="number">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Parallel Resource Blocks</label>
+          <div class="input-field">
+            <input id="blocks" type="number">
+          </div>
+        </div>
+
+        <button class="btn" onclick="calculate()">
+          Calculate <i class="fas fa-calculator"></i>
+        </button>
+      </div>
+
+      <div class="card">
+        <h2>Results</h2>
+        <div class="input-group">
+          <label>Result Unit</label>
+          <div class="input-field">
+            <select id="resultUnit" onchange="showResults()">
+              <option value="bps">bps</option>
+              <option value="kbps">kbps</option>
+              <option value="Mbps" selected>Mbps</option>
+            </select>
+          </div>
+        </div>
+        <div class="results-container" id="results">
+          <div class="placeholder">Please enter parameters and click Calculate</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    <div>Wireless and Mobile Network Course Project</div>
+  </footer>
+
+  <script>
+    let data = {};
+
+    function toHz(val, unit) {
+      if (unit === 'kHz') return val * 1e3;
+      if (unit === 'MHz') return val * 1e6;
+      return val;
+    }
+
+    function toSec(val, unit) {
+      if (unit === 'msec') return val * 1e-3;
+      return val;
+    }
+
+    function toReadable(val, unit) {
+      if (unit === 'kbps') return val / 1e3;
+      if (unit === 'Mbps') return val / 1e6;
+      return val;
+    }
+
+    function calculate() {
+      const bw = toHz(parseFloat(document.getElementById('bandwidth').value), document.getElementById('bandwidthUnit').value);
+      const spacing = toHz(parseFloat(document.getElementById('spacing').value), document.getElementById('spacingUnit').value);
+      const symbols = parseInt(document.getElementById('symbols').value);
+      const duration = toSec(parseFloat(document.getElementById('duration').value), document.getElementById('durationUnit').value);
+      const qam = parseInt(document.getElementById('qam').value);
+      const blocks = parseInt(document.getElementById('blocks').value);
+
+      if (!bw || !spacing || !symbols || !duration || !qam || !blocks || bw % spacing !== 0 || Math.log2(qam) % 1 !== 0) {
+        document.getElementById('results').innerHTML = `
+          <div class="error-message">Please check input values (bandwidth must be divisible by subcarrier spacing, QAM must be power of 2)</div>
+        `;
+        return;
+      }
+
+      const reBits = Math.log2(qam);
+      const subcarriers = bw / spacing;
+      const symbolBits = subcarriers * reBits;
+      const blockBits = symbolBits * symbols;
+      const totalBits = blockBits * blocks;
+      const rate = totalBits / duration;
+
+      data = { reBits, symbolBits, blockBits, totalBits, rate };
+      showResults();
+    }
+
+    function showResults() {
+      if (!data.rate) return;
+      const unit = document.getElementById('resultUnit').value;
+      const convertedRate = toReadable(data.rate, unit);
+
+      document.getElementById('results').innerHTML = `
+        <div class="result-box">
+          <div class="result-label">Bits per Resource Element</div>
+          <div class="result-value">${data.reBits}</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Bits per OFDM Symbol</div>
+          <div class="result-value">${data.symbolBits}</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Bits per Resource Block</div>
+          <div class="result-value">${data.blockBits}</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Max Transmission Rate</div>
+          <div class="result-value">${convertedRate.toFixed(2)} ${unit}</div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
