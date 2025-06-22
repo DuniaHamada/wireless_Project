@@ -109,6 +109,7 @@
       color: #333;
       font-size: 1rem;
       outline: none;
+      font-family: 'Nunito', sans-serif;
     }
 
     select {
@@ -227,17 +228,17 @@
 <body>
   <div class="container">
     <header>
-      <h1>Communication System Calculator</h1>
-      <p class="subtitle">Calculate rates at different processing blocks</p>
+      <h1>Wireless Communication System Calculator</h1>
+      <p class="subtitle">Compute the data rates at different processing blocks in a wireless communication system</p>
     </header>
 
     <main>
       <div class="card">
-        <h2>Input Parameters</h2>
+        <h2>System Parameters</h2>
         <div class="input-group">
-          <label for="bandwidth">Channel Bandwidth</label>
+          <label for="bandwidth">Signal Bandwidth (B)</label>
           <div class="input-field">
-            <input type="number" id="bandwidth" placeholder="e.g., 4">
+            <input type="number" id="bandwidth" placeholder="e.g., 4" min="0" step="0.01">
             <select id="bandwidthUnit">
               <option value="Hz">Hz</option>
               <option value="kHz">kHz</option>
@@ -247,25 +248,25 @@
           </div>
         </div>
         <div class="input-group">
-          <label for="quantizerBits">Quantizer Bits</label>
+          <label for="quantizerBits">Quantizer Bits (n)</label>
           <div class="input-field">
-            <input type="number" id="quantizerBits" placeholder="e.g., 8">
+            <input type="number" id="quantizerBits" placeholder="e.g., 8" min="1" max="32" step="1">
           </div>
         </div>
         <div class="input-group">
-          <label for="sourceCompression">Source Compression Ratio</label>
+          <label for="sourceCompression">Source Compression Ratio (CR)</label>
           <div class="input-field">
-            <input type="number" id="sourceCompression" step="0.01" placeholder="e.g., 0.25">
+            <input type="number" id="sourceCompression" step="0.01" placeholder="e.g., 0.25" min="0.01" max="1">
           </div>
         </div>
         <div class="input-group">
-          <label for="channelCodeRate">Channel Encoder Efficiency</label>
+          <label for="channelCodeRate">Channel EnCoder Rate (R)</label>
           <div class="input-field">
-            <input type="number" id="channelCodeRate" step="0.01" placeholder="e.g., 0.5">
+            <input type="number" id="channelCodeRate" step="0.01" placeholder="e.g., 0.5" min="0.01" max="1">
           </div>
         </div>
-        <button class="btn" onclick="calculate()">
-          Calculate Output Rates <i class="fas fa-calculator"></i>
+        <button class="btn" onclick="calculateRates()">
+          Calculate Rates <i class="fas fa-calculator"></i>
         </button>
       </div>
 
@@ -284,46 +285,84 @@
 
   <script>
     function convertToHz(value, unit) {
-      const map = { 'Hz': 1, 'kHz': 1e3, 'MHz': 1e6, 'GHz': 1e9 };
-      return value * (map[unit] || 1);
+      const multipliers = {
+        'Hz': 1,
+        'kHz': 1e3,
+        'MHz': 1e6,
+        'GHz': 1e9
+      };
+      return value * (multipliers[unit] || 1);
     }
 
-    function calculate() {
+    function formatRate(rate) {
+      if (rate >= 1e9) {
+        return `${(rate / 1e9).toFixed(2)} Gbps`;
+      } else if (rate >= 1e6) {
+        return `${(rate / 1e6).toFixed(2)} Mbps`;
+      } else if (rate >= 1e3) {
+        return `${(rate / 1e3).toFixed(2)} kbps`;
+      }
+      return `${rate.toFixed(2)} bps`;
+    }
+
+    function calculateRates() {
+      // Get input values
       const bw = parseFloat(document.getElementById('bandwidth').value);
       const unit = document.getElementById('bandwidthUnit').value;
       const qBits = parseInt(document.getElementById('quantizerBits').value);
       const srcRatio = parseFloat(document.getElementById('sourceCompression').value);
       const codeRate = parseFloat(document.getElementById('channelCodeRate').value);
 
-      if (isNaN(bw) || isNaN(qBits) || isNaN(srcRatio) || isNaN(codeRate)) {
-        alert("Please fill in all fields with valid numbers");
+      // Validate inputs
+      if (isNaN(bw) || bw <= 0) {
+        alert("Please enter a valid positive bandwidth value");
+        return;
+      }
+      if (isNaN(qBits) || qBits < 1 || qBits > 32) {
+        alert("Quantizer bits must be between 1 and 32");
+        return;
+      }
+      if (isNaN(srcRatio) || srcRatio <= 0 || srcRatio > 1) {
+        alert("Source compression ratio must be between 0.01 and 1");
+        return;
+      }
+      if (isNaN(codeRate) || codeRate <= 0 || codeRate > 1) {
+        alert("Channel code rate must be between 0.01 and 1");
         return;
       }
 
+      // Convert bandwidth to Hz
       const bwHz = convertToHz(bw, unit);
-      const fs = 2 * bwHz;
-      const qLevels = Math.pow(2, qBits);
-      const inputBitRate = fs * qBits;
-      const srcEncoded = inputBitRate * srcRatio;
-      const chanEncoded = srcEncoded / codeRate;
-      const interleaver = chanEncoded;
-      const burstFormatted = chanEncoded;
 
-      const format = val => `${(val / 1e6).toFixed(2)} Mbps`;
+      // Calculate rates at each stage
+      const samplingRate = 2 * bwHz; // Nyquist rate
+      const quantizationLevels = Math.pow(2, qBits);
+      const rawBitRate = samplingRate * qBits;
+      const sourceEncodedRate = rawBitRate * srcRatio;
+      const channelEncodedRate = sourceEncodedRate / codeRate;
+      const interleaverRate = channelEncodedRate; // No rate change
+      const burstFormattedRate = channelEncodedRate; // No rate change
 
+      // Prepare results for display
       const results = [
-        { label: 'Sampler', value: format(fs) },
-        { label: 'Quantizer', value: `${qLevels} Levels` },
-        { label: 'Source Encoder', value: format(srcEncoded) },
-        { label: 'Channel Encoder', value: format(chanEncoded) },
-        { label: 'Interleaver', value: format(interleaver) },
-        { label: 'Burst Formatting', value: format(burstFormatted) }
+        { label: 'Sampler Output', description: 'Sampling Rate (Nyquist)', value: samplingRate, unit: 'samples/sec' },
+        { label: 'Quantizer Output', description: 'Quantization Levels', value: quantizationLevels, unit: 'levels' },
+        { label: 'Source Encoder Output', description: 'Compressed Bit Rate', value: sourceEncodedRate, unit: 'bits/sec' },
+        { label: 'Channel Encoder Output', description: 'Encoded Bit Rate', value: channelEncodedRate, unit: 'bits/sec' },
+        { label: 'Interleaver Output', description: 'Interleaved Bit Rate', value: interleaverRate, unit: 'bits/sec' },
+        { label: 'Burst Formatter Output', description: 'Formatted Bit Rate', value: burstFormattedRate, unit: 'bits/sec' }
       ];
 
+      // Display results
       document.getElementById('results').innerHTML = results.map(result => `
         <div class="result-box">
           <div class="result-label">${result.label}</div>
-          <div class="result-value">${result.value}</div>
+          <div class="result-value">
+            ${result.unit === 'levels' ? 
+              result.value.toLocaleString() + ' levels' : 
+              formatRate(result.value)}
+          </div>
+          <div style="font-size: 0.8rem; color: var(--dark-gray);">${result.description}</div>
         </div>
       `).join('');
     }

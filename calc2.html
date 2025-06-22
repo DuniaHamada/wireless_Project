@@ -32,7 +32,7 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 800px;
       margin: 0 auto;
       padding: 2rem 1.5rem;
       width: 100%;
@@ -44,7 +44,7 @@
     }
 
     h1 {
-      font-size: 2.2rem;
+      font-size: 2rem;
       font-weight: 700;
       margin-bottom: 0.5rem;
       color: var(--pink-dark);
@@ -52,10 +52,12 @@
     }
 
     h2 {
-      font-size: 1.8rem;
+      font-size: 1.5rem;
       font-weight: 600;
       margin-bottom: 1.5rem;
       color: var(--pink-dark);
+      border-bottom: 2px solid var(--pink-light);
+      padding-bottom: 0.5rem;
     }
 
     .subtitle {
@@ -84,13 +86,14 @@
 
     .input-group {
       margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
     }
 
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-      color: var(--dark-gray);
+    .input-group label {
+      min-width: 250px;
+      margin-bottom: 0;
+      margin-right: 1rem;
     }
 
     .input-field {
@@ -99,26 +102,31 @@
       border-radius: 8px;
       overflow: hidden;
       border: 1px solid #ddd;
+      flex: 1;
     }
 
     input, select {
-      flex: 1;
       padding: 0.75rem 1rem;
       background: var(--white);
       border: none;
       color: #333;
       font-size: 1rem;
       outline: none;
+      flex: 1;
     }
 
     select {
-      border-left: 1px solid #ddd;
-      max-width: 100px;
       appearance: none;
       background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23E75480'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
       background-repeat: no-repeat;
       background-position: right 0.75rem center;
       background-size: 1rem;
+    }
+
+    .unit-label {
+      padding: 0.75rem 1rem;
+      background: var(--gray);
+      color: var(--dark-gray);
     }
 
     .btn {
@@ -132,7 +140,7 @@
       transition: var(--transition);
       width: 100%;
       font-size: 1rem;
-      margin-top: 0.5rem;
+      margin-top: 1rem;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -154,9 +162,6 @@
     }
 
     .results-container {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
       margin-top: 1.5rem;
     }
 
@@ -164,6 +169,7 @@
       background-color: var(--gray);
       border-radius: 8px;
       padding: 1.25rem;
+      margin-bottom: 1rem;
       border-left: 3px solid var(--pink);
     }
 
@@ -171,6 +177,7 @@
       font-size: 0.9rem;
       color: var(--dark-gray);
       margin-bottom: 0.5rem;
+      font-weight: 500;
     }
 
     .result-value {
@@ -184,7 +191,6 @@
       font-style: italic;
       padding: 1rem;
       text-align: center;
-      grid-column: span 2;
     }
 
     .error-message {
@@ -218,19 +224,26 @@
       }
       
       h2 {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
       }
       
       .card {
         padding: 1.5rem;
       }
       
-      .results-container {
-        grid-template-columns: 1fr;
+      .input-group {
+        flex-direction: column;
+        align-items: flex-start;
       }
       
-      .placeholder {
-        grid-column: span 1;
+      .input-group label {
+        min-width: auto;
+        margin-bottom: 0.5rem;
+        margin-right: 0;
+      }
+      
+      .input-field {
+        width: 100%;
       }
     }
   </style>
@@ -239,85 +252,69 @@
   <div class="container">
     <header>
       <h1>OFDM System Calculator</h1>
-      <p class="subtitle">Data rates and spectral efficiency calculations</p>
+      <p class="subtitle">Calculate data rates for resource elements, OFDM symbols, and resource blocks</p>
     </header>
 
     <main>
       <div class="card">
-        <h2>Input Parameters</h2>
+        <h2>System Parameters</h2>
         <div class="input-group">
-          <label>Bandwidth</label>
+          <label>Bandwidth of each resource block:</label>
           <div class="input-field">
-            <input id="bandwidth" placeholder="e.g., 180" type="number">
-            <select id="bandwidthUnit">
-              <option value="Hz">Hz</option>
-              <option value="kHz" selected>kHz</option>
-              <option value="MHz">MHz</option>
+            <input id="rbBandwidth" type="number" placeholder="e.g., 180" min="1">
+            <span class="unit-label">kHz</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Subcarrier spacing:</label>
+          <div class="input-field">
+            <input id="subcarrierSpacing" type="number" placeholder="e.g., 15" min="1">
+            <span class="unit-label">kHz</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Number of OFDM symbols per resource block:</label>
+          <div class="input-field">
+            <input id="symbolsPerRB" type="number" placeholder="e.g., 7" min="1">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Duration of each resource block:</label>
+          <div class="input-field">
+            <input id="rbDuration" type="number" placeholder="e.g., 0.5" min="0.1" step="0.01">
+            <span class="unit-label">ms</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label>Modulation Type:</label>
+          <div class="input-field">
+            <select id="modulation">
+              <option value="4">QAM</option>
+              <option value="4" selected>QAM</option>
+              <option value="2">PSK</option>
+              <option value="4">QPSK</option>
             </select>
           </div>
         </div>
 
         <div class="input-group">
-          <label>Subcarrier Spacing</label>
+          <label>Number of parallel resource blocks:</label>
           <div class="input-field">
-            <input id="spacing" placeholder="e.g., 15" type="number">
-            <select id="spacingUnit">
-              <option value="Hz">Hz</option>
-              <option value="kHz" selected>kHz</option>
-              <option value="MHz">MHz</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label>OFDM Symbols per RB</label>
-          <div class="input-field">
-            <input id="symbols" type="number" placeholder="e.g., 7">
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label>RB Duration</label>
-          <div class="input-field">
-            <input id="duration" type="number" step="0.01" placeholder="e.g., 0.5">
-            <select id="durationUnit">
-              <option value="sec">sec</option>
-              <option value="msec" selected>msec</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label>QAM Modulation (e.g., 64, 256)</label>
-          <div class="input-field">
-            <input id="qam" type="number">
-          </div>
-        </div>
-
-        <div class="input-group">
-          <label>Parallel Resource Blocks</label>
-          <div class="input-field">
-            <input id="blocks" type="number">
+            <input id="parallelRBs" type="number" placeholder="e.g., 4" min="1" value="4">
           </div>
         </div>
 
         <button class="btn" onclick="calculate()">
-          Calculate <i class="fas fa-calculator"></i>
+          Calculate Bits per Resource Block <i class="fas fa-calculator"></i>
         </button>
       </div>
 
       <div class="card">
         <h2>Results</h2>
-        <div class="input-group">
-          <label>Result Unit</label>
-          <div class="input-field">
-            <select id="resultUnit" onchange="showResults()">
-              <option value="bps">bps</option>
-              <option value="kbps">kbps</option>
-              <option value="Mbps" selected>Mbps</option>
-            </select>
-          </div>
-        </div>
         <div class="results-container" id="results">
           <div class="placeholder">Please enter parameters and click Calculate</div>
         </div>
@@ -330,72 +327,73 @@
   </footer>
 
   <script>
-    let data = {};
-
-    function toHz(val, unit) {
-      if (unit === 'kHz') return val * 1e3;
-      if (unit === 'MHz') return val * 1e6;
-      return val;
-    }
-
-    function toSec(val, unit) {
-      if (unit === 'msec') return val * 1e-3;
-      return val;
-    }
-
-    function toReadable(val, unit) {
-      if (unit === 'kbps') return val / 1e3;
-      if (unit === 'Mbps') return val / 1e6;
-      return val;
-    }
-
     function calculate() {
-      const bw = toHz(parseFloat(document.getElementById('bandwidth').value), document.getElementById('bandwidthUnit').value);
-      const spacing = toHz(parseFloat(document.getElementById('spacing').value), document.getElementById('spacingUnit').value);
-      const symbols = parseInt(document.getElementById('symbols').value);
-      const duration = toSec(parseFloat(document.getElementById('duration').value), document.getElementById('durationUnit').value);
-      const qam = parseInt(document.getElementById('qam').value);
-      const blocks = parseInt(document.getElementById('blocks').value);
+      // Get input values
+      const rbBandwidth = parseFloat(document.getElementById('rbBandwidth').value) * 1e3; // Convert to Hz
+      const subcarrierSpacing = parseFloat(document.getElementById('subcarrierSpacing').value) * 1e3; // Convert to Hz
+      const symbolsPerRB = parseInt(document.getElementById('symbolsPerRB').value);
+      const rbDuration = parseFloat(document.getElementById('rbDuration').value) * 1e-3; // Convert to seconds
+      const modulationOrder = parseInt(document.getElementById('modulation').value);
+      const parallelRBs = parseInt(document.getElementById('parallelRBs').value);
 
-      if (!bw || !spacing || !symbols || !duration || !qam || !blocks || bw % spacing !== 0 || Math.log2(qam) % 1 !== 0) {
+      // Validate inputs
+      if (isNaN(rbBandwidth) || isNaN(subcarrierSpacing) || isNaN(symbolsPerRB) || 
+          isNaN(rbDuration) || isNaN(modulationOrder) || isNaN(parallelRBs)) {
         document.getElementById('results').innerHTML = `
-          <div class="error-message">Please check input values (bandwidth must be divisible by subcarrier spacing, QAM must be power of 2)</div>
+          <div class="error-message">Please fill in all fields with valid numbers</div>
         `;
         return;
       }
 
-      const reBits = Math.log2(qam);
-      const subcarriers = bw / spacing;
-      const symbolBits = subcarriers * reBits;
-      const blockBits = symbolBits * symbols;
-      const totalBits = blockBits * blocks;
-      const rate = totalBits / duration;
+      // Standard subcarriers per RB (12 for LTE/NR)
+      const subcarriersPerRB = 12;
+      
+      // Calculate total subcarriers
+      const totalSubcarriers = subcarriersPerRB;
+      
+      // Calculate bits per resource element (RE)
+      const bitsPerRE = Math.log2(modulationOrder);
+      
+      // Calculate bits per OFDM symbol
+      const bitsPerSymbol = totalSubcarriers * bitsPerRE;
+      
+      // Calculate bits per resource block
+      const bitsPerRB = bitsPerSymbol * symbolsPerRB;
+      
+      // Calculate data rate per RB (bits per second)
+      const dataRatePerRB = bitsPerRB / rbDuration;
+      
+      // Calculate maximum transmission rate with parallel RBs
+      const maxTransmissionRate = dataRatePerRB * parallelRBs;
+      
+      // Calculate spectral efficiency (bps/Hz)
+      const spectralEfficiency = maxTransmissionRate / (rbBandwidth * parallelRBs);
 
-      data = { reBits, symbolBits, blockBits, totalBits, rate };
-      showResults();
-    }
-
-    function showResults() {
-      if (!data.rate) return;
-      const unit = document.getElementById('resultUnit').value;
-      const convertedRate = toReadable(data.rate, unit);
-
+      // Format results
       document.getElementById('results').innerHTML = `
         <div class="result-box">
-          <div class="result-label">Bits per Resource Element</div>
-          <div class="result-value">${data.reBits}</div>
+          <div class="result-label">Bits per Resource Element (RE)</div>
+          <div class="result-value">${bitsPerRE.toFixed(2)} bits</div>
         </div>
         <div class="result-box">
           <div class="result-label">Bits per OFDM Symbol</div>
-          <div class="result-value">${data.symbolBits}</div>
+          <div class="result-value">${bitsPerSymbol.toFixed(0)} bits</div>
         </div>
         <div class="result-box">
-          <div class="result-label">Bits per Resource Block</div>
-          <div class="result-value">${data.blockBits}</div>
+          <div class="result-label">Bits per Resource Block (RB)</div>
+          <div class="result-value">${bitsPerRB.toFixed(0)} bits</div>
         </div>
         <div class="result-box">
-          <div class="result-label">Max Transmission Rate</div>
-          <div class="result-value">${convertedRate.toFixed(2)} ${unit}</div>
+          <div class="result-label">Data Rate per RB</div>
+          <div class="result-value">${(dataRatePerRB / 1e3).toFixed(2)} kbps</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Max Transmission Rate (${parallelRBs} RBs)</div>
+          <div class="result-value">${(maxTransmissionRate / 1e6).toFixed(2)} Mbps</div>
+        </div>
+        <div class="result-box">
+          <div class="result-label">Spectral Efficiency</div>
+          <div class="result-value">${spectralEfficiency.toFixed(2)} bps/Hz</div>
         </div>
       `;
     }
