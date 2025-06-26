@@ -74,7 +74,35 @@
       transition: var(--transition);
       border-left: 4px solid var(--pink);
     }
-
+ .result-box1 {
+  background-color: #ffc5cd;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  color: #E75480;
+  font-size: 1.1rem; /* حجم خط أكبر */
+  line-height: 1.5;
+  max-width: 100%; /* ما يخليش المحتوى يطلع برا */
+  overflow-wrap: break-word; /* يكسر الكلمات الطويلة */
+  box-sizing: border-box;
+}
+.result-details1 {
+  background-color: #ffc5cd;
+  padding: 1rem;
+  border-radius: 8px;
+  color: #E75480;
+  font-size: 1.15rem;
+  line-height: 1.6;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-word;
+  box-sizing: border-box;
+  margin-top: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+}
     .card:hover {
       transform: translateY(-3px);
       box-shadow: 0 6px 16px rgba(255, 133, 162, 0.15);
@@ -235,6 +263,8 @@
       .card {
         padding: 1.5rem;
       }
+     
+
     }
   </style>
 </head>
@@ -442,8 +472,27 @@
             <div class="result-label">Pt (Watts)</div>
             <div class="result-value" id="Pt_watts_display">-</div>
           </div>
+          
         </div>
+        
       </div>
+       <div class="card" style="grid-column: 1 / -1;">
+  <h2>Explanation</h2>
+
+  <div id="geminiExplanationPrBox" class="result-box1">
+    <p>Click "Calculate Pr" to see the explanation of the received power calculation.</p>
+  </div>
+  <div id="geminiExplanationPr" class="result-details1"></div>
+
+  <div id="geminiExplanationPtBox" class="result-box1">
+    <p>Click "Calculate Pt" to see the explanation of the transmitted power calculation.</p>
+  </div>
+  <div id="geminiExplanationPt" class="result-details1"></div>
+</div>
+
+
+
+
     </main>
   </div>
 
@@ -475,60 +524,135 @@
     };
 
     function convertToDb(value, unit) {
-      if (unit === "dBm") {
-        return value - 30;
-      }
+  switch (unit) {
+    case "linear":
+      return 10 * Math.log10(value);
+    case "dBm":
+      return value - 30; // dBm to dBW
+    case "dB":
+      return value; // no change needed
+    default:
+      console.warn("Unknown unit for dB conversion:", unit);
       return value;
-    }
+  }
+}
 
-    function convertToWatts(db) {
-      return Math.pow(10, db / 10) / 1000;
-    }
 
-    function calculatePr() {
-      const K = -228.6;  // Boltzmann constant in dB
+   function convertToWatts(dBm) {
+  return Math.pow(10, (dBm - 30) / 10); // dBm → W
+}
 
-      let M = document.getElementById('M').value;
-      let T = document.getElementById('T').value;
-      let Nf = document.getElementById('Nf').value;
-      let R = document.getElementById('R').value;
-      let modulation = document.getElementById('modulation').value;
-      let BER = document.getElementById('BER').value;
-      let unitM = document.getElementById('unitM').value;
-      let unitT = document.getElementById('unitT').value;
-      let unitNf = document.getElementById('unitNf').value;
-      let unitR = document.getElementById('unitR').value;
+function calculatePr() {
+  const K = -228.6;  // Boltzmann constant in dB
 
-      if (M === "" || T === "" || Nf === "" || R === "" || modulation === "" || BER === "" || unitM === "" || unitT === "" || unitNf === "" || unitR === "") {
-        alert("Please fill in all fields for Pr calculation.");
-        return;
-      }
+  // Get input values
+  let M = document.getElementById('M').value;
+  let T = document.getElementById('T').value;
+  let Nf = document.getElementById('Nf').value;
+  let R = document.getElementById('R').value;
+  let modulation = document.getElementById('modulation').value;
+  let BER = document.getElementById('BER').value;
+  let unitM = document.getElementById('unitM').value;
+  let unitT = document.getElementById('unitT').value;
+  let unitNf = document.getElementById('unitNf').value;
+  let unitR = document.getElementById('unitR').value;
 
-      let Eb_N0 = getEbNo(modulation, BER);
-      if (Eb_N0 === null) {
-        alert("Invalid BER value for the selected modulation.");
-        return;
-      }
+  if (
+    M === "" || T === "" || Nf === "" || R === "" ||
+    modulation === "" || BER === "" || unitM === "" ||
+    unitT === "" || unitNf === "" || unitR === ""
+  ) {
+    alert("Please fill in all fields for Pr calculation.");
+    return;
+  }
 
-      M = convertToDb(parseFloat(M), unitM);
-      T = convertToDb(parseFloat(T), unitT);
-      Nf = convertToDb(parseFloat(Nf), unitNf);
-      R = convertToDb(parseFloat(R), unitR);
-      Eb_N0 = parseFloat(Eb_N0);
+  let Eb_N0 = getEbNo(modulation, BER);
+  if (Eb_N0 === null) {
+    alert("Invalid BER value for the selected modulation.");
+    return;
+  }
 
-      let Pr_dB = M + K + T + Nf + R + Eb_N0;
-      let Pr_dBm = Pr_dB + 30;
-      let Pr_watts = convertToWatts(Pr_dBm);
+  // Keep original values for explanation
+  const M_raw = parseFloat(M);
+  const T_raw = parseFloat(T);
+  const Nf_raw = parseFloat(Nf);
+  const R_raw = parseFloat(R);
+  const EbN0 = parseFloat(Eb_N0);
+  const mod = modulation;
 
-      // Update results display
-      document.getElementById('Eb_N0_display').textContent = Eb_N0.toFixed(2);
-      document.getElementById('Pr_dB_display').textContent = Pr_dB.toFixed(2);
-      document.getElementById('Pr_dBm_display').textContent = Pr_dBm.toFixed(2);
-      document.getElementById('Pr_watts_display').textContent = Pr_watts.toExponential(2);
-      
-      // Set the Pr_dB value for Pt calculation
-      document.getElementById('Pr_dB').value = Pr_dB.toFixed(2);
-    }
+  // Convert all to dB
+  M = convertToDb(M_raw, unitM);
+  T = convertToDb(T_raw, unitT);
+  Nf = convertToDb(Nf_raw, unitNf);
+  R = convertToDb(R_raw, unitR);
+
+  const Pr_dB = M + K + T + Nf + R + EbN0;
+  const Pr_dBm = Pr_dB + 30;
+  const Pr_W = convertToWatts(Pr_dBm);
+
+  // Update UI
+  document.getElementById('Eb_N0_display').textContent = EbN0.toFixed(2);
+  document.getElementById('Pr_dB_display').textContent = Pr_dB.toFixed(2);
+  document.getElementById('Pr_dBm_display').textContent = Pr_dBm.toFixed(2);
+  document.getElementById('Pr_watts_display').textContent = Pr_W.toExponential(2);
+  document.getElementById('Pr_dB').value = Pr_dB.toFixed(2);
+
+  // Prepare prompt
+  const prompt = `
+User inputs:
+- Modulation: ${mod}
+- BER: ${BER}
+- Parameters:
+   - M (Implementation Margin): ${M_raw} ${unitM}
+   - T (Noise Temp): ${T_raw} ${unitT}
+   - Nf (Noise Figure): ${Nf_raw} ${unitNf}
+   - R (Data Rate): ${R_raw} ${unitR}
+
+Computed values:
+- Eb/N0: ${EbN0}
+- Received Power (Pr) in dB: ${Pr_dB.toFixed(2)}
+- Received Power in dBm: ${Pr_dBm.toFixed(2)}
+- Received Power in Watts: ${Pr_W.toExponential(2)}
+
+Instructions:
+1. Validate if the inputs and calculated values make sense physically.
+2. Explain step-by-step how the calculation was done.
+3. Describe what each parameter means in simple, beginner-friendly terms.
+4. Summarize the final values clearly.
+
+Output format:
+
+Validation:
+- [comments]
+
+Calculation Steps:
+- ...
+
+Summary:
+- Eb/N0: ...
+- Pr (dB): ...
+- Pr (dBm): ...
+- Pr (Watts): ...
+`;
+
+  // Send to Gemini API
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBws1CJL9Kfmta32bLWXKL3nAkuU-Ly9Iw', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }]
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    const explanation = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No explanation.";
+document.getElementById('geminiExplanationPr').innerHTML = `<pre>${explanation}</pre>`;
+  })
+  .catch(err => {
+    console.error("Gemini API error:", err);
+    document.getElementById('geminiExplanationPr').innerText = "Failed to fetch explanation.";
+  });
+}
 
     function getEbNo(modulation, BER) {
       let modulationTable = modulationData[modulation];
@@ -540,94 +664,113 @@
       return null;
     }
 
-    function calculatePt() {
-      let Pr = document.getElementById('Pr_dB').value;
-      let Lp = document.getElementById('Lp').value;
-      let Lf = document.getElementById('Lf').value;
-      let Lo = document.getElementById('Lo').value;
-      let Fm = document.getElementById('Fm').value;
-      let Gt = document.getElementById('Gt').value;
-      let Gr = document.getElementById('Gr').value;
-      let At = document.getElementById('At').value;
-      let Ar = document.getElementById('Ar').value;
-      let unitLp = document.getElementById('unitLp').value;
-      let unitLf = document.getElementById('unitLf').value;
-      let unitLo = document.getElementById('unitLo').value;
-      let unitFm = document.getElementById('unitFm').value;
-      let unitGt = document.getElementById('unitGt').value;
-      let unitGr = document.getElementById('unitGr').value;
-      let unitAt = document.getElementById('unitAt').value;
-      let unitAr = document.getElementById('unitAr').value;
+  function calculatePt() {
+  let Pr = document.getElementById('Pr_dB').value;
+  let Lp = document.getElementById('Lp').value;
+  let Lf = document.getElementById('Lf').value;
+  let Lo = document.getElementById('Lo').value;
+  let Fm = document.getElementById('Fm').value;
+  let Gt = document.getElementById('Gt').value;
+  let Gr = document.getElementById('Gr').value;
+  let At = document.getElementById('At').value;
+  let Ar = document.getElementById('Ar').value;
+  let unitLp = document.getElementById('unitLp').value;
+  let unitLf = document.getElementById('unitLf').value;
+  let unitLo = document.getElementById('unitLo').value;
+  let unitFm = document.getElementById('unitFm').value;
+  let unitGt = document.getElementById('unitGt').value;
+  let unitGr = document.getElementById('unitGr').value;
+  let unitAt = document.getElementById('unitAt').value;
+  let unitAr = document.getElementById('unitAr').value;
 
-      if (Pr === "" || Lp === "" || Lf === "" || Lo === "" || Fm === "" || Gt === "" || Gr === "" || At === "" || Ar === "" || unitLp === "" || unitLf === "" || unitLo === "" || unitFm === "" || unitGt === "" || unitGr === "" || unitAt === "" || unitAr === "") {
-        alert("Please fill in all fields for Pt calculation.");
-        return;
-      }
+  if (
+    Pr === "" || Lp === "" || Lf === "" || Lo === "" || Fm === "" || Gt === "" || Gr === "" || At === "" || Ar === "" ||
+    unitLp === "" || unitLf === "" || unitLo === "" || unitFm === "" ||
+    unitGt === "" || unitGr === "" || unitAt === "" || unitAr === ""
+  ) {
+    alert("Please fill in all fields for Pt calculation.");
+    return;
+  }
 
-      Pr = parseFloat(Pr);
-      Lp = convertToDb(parseFloat(Lp), unitLp);
-      Lf = convertToDb(parseFloat(Lf), unitLf);
-      Lo = convertToDb(parseFloat(Lo), unitLo);
-      Fm = convertToDb(parseFloat(Fm), unitFm);
-      Gt = convertToDb(parseFloat(Gt), unitGt);
-      Gr = convertToDb(parseFloat(Gr), unitGr);
-      At = convertToDb(parseFloat(At), unitAt);
-      Ar = convertToDb(parseFloat(Ar), unitAr);
+  // Parse and convert values to dB
+  Pr = parseFloat(Pr);
+  const Lp_dB = convertToDb(parseFloat(Lp), unitLp);
+  const Lf_dB = convertToDb(parseFloat(Lf), unitLf);
+  const Lo_dB = convertToDb(parseFloat(Lo), unitLo);
+  const Fm_dB = convertToDb(parseFloat(Fm), unitFm);
+  const Gt_dB = convertToDb(parseFloat(Gt), unitGt);
+  const Gr_dB = convertToDb(parseFloat(Gr), unitGr);
+  const At_dB = convertToDb(parseFloat(At), unitAt);
+  const Ar_dB = convertToDb(parseFloat(Ar), unitAr);
 
-      let Pt_dB = Pr + Lp + Lf + Lo + Fm - Gt - Gr - At - Ar;
-      let Pt_dBm = Pt_dB + 30;
-      let Pt_watts = convertToWatts(Pt_dBm);
+  // Link Budget Formula
+  const Pt_dB = Pr + Lp_dB + Lf_dB + Lo_dB + Fm_dB - Gt_dB - Gr_dB - At_dB - Ar_dB;
+  const Pt_dBm = Pt_dB + 30;
+  const Pt_W = convertToWatts(Pt_dBm); // Convert to watts
 
-      // Update results display
-      document.getElementById('Pt_dB_display').textContent = Pt_dB.toFixed(2);
-      document.getElementById('Pt_dBm_display').textContent = Pt_dBm.toFixed(2);
-      document.getElementById('Pt_watts_display').textContent = Pt_watts.toExponential(2);
-    }
+  // Show Results
+  document.getElementById('Pt_dB_display').textContent = Pt_dB.toFixed(2);
+  document.getElementById('Pt_dBm_display').textContent = Pt_dBm.toFixed(2);
+  document.getElementById('Pt_watts_display').textContent = Pt_W.toExponential(2);
 
-    document.querySelectorAll('input, select').forEach(input => {
-      input.addEventListener('input', () => {
-        // Check if all required fields for Pr calculation are filled
-        const prFields = [
-          document.getElementById('M').value,
-          document.getElementById('T').value,
-          document.getElementById('Nf').value,
-          document.getElementById('R').value,
-          document.getElementById('modulation').value,
-          document.getElementById('BER').value
-        ];
-        const prFilled = prFields.every(val => val !== '' && !isNaN(val) || typeof val === 'string');
+  // Gemini prompt
+  const prompt = `
+User Inputs:
 
-        // Check if all required fields for Pt calculation are filled
-        const ptFields = [
-          document.getElementById('Pr_dB').value,
-          document.getElementById('Lp').value,
-          document.getElementById('Lf').value,
-          document.getElementById('Lo').value,
-          document.getElementById('Fm').value,
-          document.getElementById('Gt').value,
-          document.getElementById('Gr').value,
-          document.getElementById('At').value,
-          document.getElementById('Ar').value
-        ];
-        const ptFilled = ptFields.every(val => val !== '' && !isNaN(val));
+- Pr (received power): ${Pr} dB
+- Lp (path loss): ${Lp_dB.toFixed(2)} dB
+- Lf (feeder loss): ${Lf_dB.toFixed(2)} dB
+- Lo (other losses): ${Lo_dB.toFixed(2)} dB
+- Fm (fade margin): ${Fm_dB.toFixed(2)} dB
+- Gt (transmit antenna gain): ${Gt_dB.toFixed(2)} dB
+- Gr (receive antenna gain): ${Gr_dB.toFixed(2)} dB
+- At (Tx antenna attenuation): ${At_dB.toFixed(2)} dB
+- Ar (Rx antenna attenuation): ${Ar_dB.toFixed(2)} dB
 
-        // Update button states
-        const calculatePrButton = document.querySelector('#calculatePrButton');
-        const calculatePtButton = document.querySelector('#calculatePtButton');
-        
-        if (prFilled) {
-          calculatePrButton.classList.add('enabled');
-        } else {
-          calculatePrButton.classList.remove('enabled');
-        }
+Computed Transmit Power:
+- Pt (dB): ${Pt_dB.toFixed(2)} dB
+- Pt (dBm): ${Pt_dBm.toFixed(2)} dBm
+- Pt (Watts): ${Pt_W.toExponential(2)} W
 
-        if (ptFilled) {
-          calculatePtButton.classList.add('enabled');
-        } else {
-          calculatePtButton.classList.remove('enabled');
-        }
-      });
-    });
+Instructions:
+1. Validate that the inputs are physically reasonable.
+2. Explain step-by-step how the transmit power was calculated from received power.
+3. Describe each parameter in simple, clear terms.
+4. Use friendly language for beginners in wireless link budget analysis.
+
+Output format:
+
+Validation:
+- [comments]
+
+Calculation Steps:
+- ...
+
+Summary:
+- Pt (dB): ...
+- Pt (dBm): ...
+- Pt (W): ...
+`;
+
+  // Gemini API call
+  fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBws1CJL9Kfmta32bLWXKL3nAkuU-Ly9Iw', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }]
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    const explanation = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No explanation.";
+    document.getElementById('geminiExplanationPt').innerText = explanation;
+  })
+  .catch(err => {
+    console.error("Gemini API error:", err);
+    document.getElementById('geminiExplanationPt').innerText = "Failed to fetch explanation.";
+  });
+}
+
   </script>
 </body>
 </html>

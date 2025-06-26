@@ -365,6 +365,70 @@
           <div style="font-size: 0.8rem; color: var(--dark-gray);">${result.description}</div>
         </div>
       `).join('');
+      const prompt = `
+The following are user inputs:
+- Bandwidth: ${bw} ${unit}
+- Quantizer Bits: ${qBits}
+- Source Compression Ratio: ${srcRatio}
+- Channel Code Rate: ${codeRate}
+
+Instructions:
+1. Validate the inputs (e.g., is the compression ratio logical?).
+2. Perform the following calculations **step-by-step**:
+   - Convert Bandwidth to Hz
+   - Sampling rate (fs) = 2 * bandwidth
+   - Quantization levels (L) = 2 ^ quantizer bits
+   - Input bit rate (Rb) = fs * quantizer bits
+   - Source encoded rate (Rsc) = Rb * compression ratio
+   - Channel encoded rate (Rce) = Rsc / channel code rate
+   - Interleaver output = Rce
+   - Burst formatted rate = Rce
+3. For each stage (sampling, quantization, source encoding, channel encoding), briefly explain what it does and how it affects the data rate.
+Use clear, friendly, and concise English. Target explanation for a beginner in wireless systems.
+
+Output format:
+Validation:
+- [comments here]
+
+Methodology:
+- [step by step calculations and logic]
+
+Result Summary:
+- Sampler Rate: ...
+- Quantizer Levels: ...
+- Source Encoder Output: ...
+- Channel Encoder Output: ...
+`;
+
+fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyBws1CJL9Kfmta32bLWXKL3nAkuU-Ly9Iw', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    contents: [
+      {
+        parts: [
+          {
+            text: prompt
+          }
+        ]
+      }
+    ]
+  })
+})
+.then(res => res.json())
+.then(data => {
+  const explanation = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No explanation.";
+  document.getElementById('results').innerHTML += `
+    <div class="result-box" style="grid-column: span 2;">
+      <div class="result-label">📘 Methodology & Explanation</div>
+      <div class="result-value" style="white-space: pre-wrap;">${explanation}</div>
+    </div>
+  `;
+})
+.catch(err => {
+  console.error("Gemini failed:", err);
+  alert("Failed to fetch detailed explanation.");
+});
     }
   </script>
 </body>
