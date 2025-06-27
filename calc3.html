@@ -299,7 +299,6 @@
               <input id="M" type="number" placeholder="Value">
               <select id="unitM" class="unit-selector">
                 <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
               </select>
             </div>
           </div>
@@ -309,9 +308,10 @@
             <div class="input-field">
               <input id="T" type="number" placeholder="Value">
               <select id="unitT" class="unit-selector">
-                <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
-              </select>
+  <option value="K">Kelvin (K)</option>
+  <option value="C">Celsius (°C)</option>
+</select>
+
             </div>
           </div>
 
@@ -321,7 +321,6 @@
               <input id="Nf" type="number" placeholder="Value">
               <select id="unitNf" class="unit-selector">
                 <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
               </select>
             </div>
           </div>
@@ -331,8 +330,8 @@
             <div class="input-field">
               <input id="R" type="number" placeholder="Value">
               <select id="unitR" class="unit-selector">
-                <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
+                <option value="Mbps">Mbps</option>
+  <option value="Hz">Hz</option>
               </select>
             </div>
           </div>
@@ -355,7 +354,6 @@
               <input id="Lp" type="number" placeholder="Value">
               <select id="unitLp" class="unit-selector">
                 <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
               </select>
             </div>
           </div>
@@ -366,7 +364,6 @@
               <input id="Lf" type="number" placeholder="Value">
               <select id="unitLf" class="unit-selector">
                 <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
               </select>
             </div>
           </div>
@@ -377,7 +374,6 @@
               <input id="Lo" type="number" placeholder="Value">
               <select id="unitLo" class="unit-selector">
                 <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
               </select>
             </div>
           </div>
@@ -388,7 +384,6 @@
               <input id="Fm" type="number" placeholder="Value">
               <select id="unitFm" class="unit-selector">
                 <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
               </select>
             </div>
           </div>
@@ -399,7 +394,6 @@
               <input id="Gt" type="number" placeholder="Value">
               <select id="unitGt" class="unit-selector">
                 <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
               </select>
             </div>
           </div>
@@ -410,7 +404,6 @@
               <input id="Gr" type="number" placeholder="Value">
               <select id="unitGr" class="unit-selector">
                 <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
               </select>
             </div>
           </div>
@@ -421,7 +414,6 @@
               <input id="At" type="number" placeholder="Value">
               <select id="unitAt" class="unit-selector">
                 <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
               </select>
             </div>
           </div>
@@ -432,7 +424,6 @@
               <input id="Ar" type="number" placeholder="Value">
               <select id="unitAr" class="unit-selector">
                 <option value="dB">dB</option>
-                <option value="dBm">dBm</option>
               </select>
             </div>
           </div>
@@ -523,14 +514,22 @@
       ]
     };
 
-    function convertToDb(value, unit) {
+   function convertToDb(value, unit) {
   switch (unit) {
-    case "linear":
+    case "linear": // للاستخدام العام لو بدك
       return 10 * Math.log10(value);
     case "dBm":
       return value - 30; // dBm to dBW
+    case "K": // الحرارة بالكلفن
+      return 10 * Math.log10(value);
+    case "C": // سيلسيوس لازم تحوليها أول لكلفن
+      return 10 * Math.log10(value + 273.15);
     case "dB":
-      return value; // no change needed
+      return value;
+    case "Hz":
+      return 10 * Math.log10(value);
+    case "Mbps":
+      return 10 * Math.log10(value * 1e6); // تحويل لـ Hz
     default:
       console.warn("Unknown unit for dB conversion:", unit);
       return value;
@@ -543,7 +542,7 @@
 }
 
 function calculatePr() {
-  const K = -228.6;  // Boltzmann constant in dB
+const K = 10 * Math.log10(1.38e-23); // ~ -228.6 dBW/Hz/K
 
   // Get input values
   let M = document.getElementById('M').value;
